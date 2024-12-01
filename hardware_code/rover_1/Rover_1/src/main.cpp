@@ -34,18 +34,23 @@ DHT dht(DHTPIN, DHTTYPE);
 int hum;
 double temp;
 
+int carMove = 0;
+
 // Communication
 //  Variable to store if sending data was successful
 String success;
 
 typedef struct struct_message
 {
+  int move;
   double temp;
   int hum;
   float lat;
   float lon;
 
 } struct_message;
+
+struct_message incomingReadings;
 
 struct_message myData;
 
@@ -63,6 +68,17 @@ void OnDataSent(const uint8_t *mac_addr, esp_now_send_status_t status)
   {
     success = "Delivery Fail :(";
   }
+}
+
+// Callback when data is received
+void OnDataRecv(const uint8_t *mac, const uint8_t *incomingData, int len)
+{
+  memcpy(&incomingReadings, incomingData, sizeof(incomingReadings));
+  Serial.print("Bytes received: ");
+  Serial.println(len);
+  Serial.print("Move: ");
+  Serial.println(incomingReadings.move);
+  carMove = incomingReadings.move;
 }
 
 void forward()
@@ -192,6 +208,28 @@ void loop()
   myData.hum = hum;
   myData.lat = lat;
   myData.lon = lon;
+
+  switch (carMove)
+  {
+  case 1:
+    forward();
+    break;
+  case 2:
+    backward();
+    break;
+  case 3:
+    right();
+    break;
+  case 4:
+    left();
+    break;
+  case 0:
+    stop();
+    break;
+  default:
+    stop();
+    break;
+  }
 
   // Send message via ESP-NOW
 
