@@ -166,7 +166,7 @@ void setup()
   pinMode(led_pin, OUTPUT);
 
   // Initialize DHT11
-  dht.begin();
+  dht.begin();  
 
   // Init ESP-NOW
   if (esp_now_init() != ESP_OK)

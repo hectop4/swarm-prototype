@@ -10,6 +10,7 @@ double tempIn;
 int humIn;
 float latIn;
 float lonIn;
+int move;
 
 esp_now_peer_info_t peerInfo; 
 
@@ -19,6 +20,7 @@ typedef struct struct_message
   int hum;
   float lat;
   float lon;
+  int move;
 
 } struct_message;
 

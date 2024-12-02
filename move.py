@@ -1,44 +1,26 @@
-from pynput import keyboard
 import serial
-# Initialize serial connection (adjust 'COM3' and baudrate as needed)
-ser = serial.Serial('/dev/ttyUSB0', 115200)
+import getch
+import time
 
-def send_to_serial(data):   
-    ser.write(data.encode())
-def on_press(key):
-    try:
-        if key == keyboard.Key.up:
-            print("1")
-            send_to_serial('1')
-        elif key == keyboard.Key.down:
-            print("2")
-            send_to_serial("2")
-        elif key == keyboard.Key.left:
-            print("3")
-            send_to_serial("3")
-        elif key == keyboard.Key.right:
-            print("4")
-            send_to_serial("4")
-    except AttributeError:
-        pass
 
-def on_release(key):
-    try:
-        if key == keyboard.Key.up:
-            print("5")
-            send_to_serial("5")
-        elif key == keyboard.Key.down:
-            print("6")
-            send_to_serial("6")
-        elif key == keyboard.Key.left:
-            print("7")
-            send_to_serial("7")
-        elif key == keyboard.Key.right:
-            print("8")
-            send_to_serial("8")
-    except AttributeError:
-        pass
+# Connect to the serial monitor
+ser = serial.Serial('/dev/ttyUSB0', 115200)  # Replace '/dev/ttyUSB0' with your serial port
 
-# Collect events until released
-with keyboard.Listener(on_press=on_press, on_release=on_release) as listener:
-    listener.join()
+while True:
+    key = getch.getch()
+
+    if key == 'w':
+        ser.write(b'f')  # Write 'f' to the serial monitor
+    elif key == 'a':
+        ser.write(b'l')  # Write 'l' to the serial monitor
+    elif key == 's':
+        ser.write(b'b')  # Write 'b' to the serial monitor
+    elif key == 'd':
+        ser.write(b'r')  # Write 'r' to the serial monitor
+    elif key == 'o':
+        ser.write(b'o')
+    elif key == '':
+        ser.write(b's')
+    else :
+        ser.write(b's')
+    
