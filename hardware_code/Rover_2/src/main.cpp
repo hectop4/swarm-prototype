@@ -46,6 +46,7 @@ String success;
 typedef struct struct_message
 
 {
+
   int id;
   double temp;
   int hum;
@@ -203,8 +204,7 @@ void setup()
 
 void loop()
 {
-
-  myData.id = 1;
+  myData.id = 2;
   unsigned long tiempoActual = millis(); // Obtiene el tiempo actual en milisegundos
   // Verifica si ha pasado el tiempo de muestreo
   if (tiempoActual - tiempoAnterior >= intervaloMuestreo)
@@ -223,16 +223,16 @@ void loop()
 
   switch (carMoveIn[0])
   {
-  case 'f':
+  case 'z':
     forward();
     break;
-  case 'b':
+  case 'x':
     backward();
     break;
-  case 'r':
+  case 'c':
     right();
     break;
-  case 'l':
+  case 'v':
     left();
     break;
   case 's':

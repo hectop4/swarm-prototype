@@ -3,53 +3,81 @@
 
 // Receiver MAC: 08:a6:f7:b1:0d:c4
 // Rover 1 MAC: cc:db:a7:3e:bf:28
+// Rover 2 MAX: e8:6b:ea:df:7e:f4
 
 uint8_t Rover1Address[] = {0xCC, 0xDB, 0xA7, 0x3E, 0xBF, 0x28};
+uint8_t Rover2Address[] = {0xe8, 0x6b, 0xea, 0xdf, 0x7e, 0xf4};
 
 double tempIn;
 int humIn;
 float latIn;
 float lonIn;
-int move;
+int carMove = 1;
+int carId;
 
-esp_now_peer_info_t peerInfo; 
+const unsigned long intervaloMuestreo = 1000; // Intervalo de muestreo en milisegundos (1 segundo)
+unsigned long tiempoAnterior = 0;             // Variable para almacenar el último tiempo de muestreo
+
+String message = "";
+
+esp_now_peer_info_t peerInfo;
 
 typedef struct struct_message
 {
+  int id;
   double temp;
   int hum;
   float lat;
   float lon;
-  int move;
+  char move[2];
 
 } struct_message;
 
 struct_message myData;
+struct_message motor_data;
+
+struct_message car1Data;
+struct_message car2Data;
+
+struct_message carStruct[2] = {car1Data, car2Data};
 
 String success;
 
-void OnDataRecv(const uint8_t *mac, const uint8_t *incomingData, int len)
-{
-  memcpy(&myData, incomingData, sizeof(myData));
-  tempIn = myData.temp;
-  humIn = myData.hum;
-  latIn = myData.lat;
-  lonIn = myData.lon;
-}
 void OnDataSent(const uint8_t *mac_addr, esp_now_send_status_t status)
 {
-  Serial.print("\r\nLast Packet Send Status:\t");
-  Serial.println(status == ESP_NOW_SEND_SUCCESS ? "Delivery Success" : "Delivery Fail");
-  if (status == 0)
-  {
-    success = "Delivery Success :)";
-  }
-  else
-  {
-    success = "Delivery Fail :(";
-  }
+  // Serial.print("\r\nLast Packet Send Status:\t");
+  // Serial.println(status == ESP_NOW_SEND_SUCCESS ? "Delivery Success" : "Delivery Fail");
+  // if (status == 0)
+  // {
+  //   success = "Delivery Success :)";
+  // }
+  // else
+  // {
+  //   success = "Delivery Fail :(";
+  // }
 }
 
+void OnDataRecv(const uint8_t *mac_addr, const uint8_t *incomingData, int len)
+{
+  char macStr[18];
+  // Serial.print("Packet received from: ");
+  // snprintf(macStr, sizeof(macStr), "%02x:%02x:%02x:%02x:%02x:%02x",
+  //          mac_addr[0], mac_addr[1], mac_addr[2], mac_addr[3], mac_addr[4], mac_addr[5]);
+  // Serial.println(macStr);
+  memcpy(&myData, incomingData, sizeof(myData));
+  // Serial.printf("Board ID %u: %u bytes\n", myData.id, len);
+  // Update the structures with the new incoming data
+  carStruct[myData.id - 1].temp = myData.temp;
+  carStruct[myData.id - 1].hum = myData.hum;
+  carStruct[myData.id - 1].lat = myData.lat;
+  carStruct[myData.id - 1].lon = myData.lon;
+  // Serial.printf("Temp value: %.2f \n", carStruct[myData.id - 1].temp);
+  // Serial.printf("Hum value: %d \n", carStruct[myData.id - 1].hum);
+  // Serial.printf("Lat value: %f \n", carStruct[myData.id - 1].lat);
+  // Serial.printf("Lon value: %f \n", carStruct[myData.id - 1].lon);
+
+  // Serial.println();
+}
 
 void setup()
 {
@@ -66,45 +94,61 @@ void setup()
     return;
   }
 
+  esp_now_register_send_cb(OnDataSent);
   // Once ESPNow is successfully Init, we will register for recv CB to
   // get recv packer info
-  esp_now_register_recv_cb(esp_now_recv_cb_t(OnDataRecv));
-
-    // Once ESPNow is successfully Init, we will register for Send CB to
-  // get the status of Trasnmitted packet
-  esp_now_register_send_cb(OnDataSent);
-  
-  // Register peer
-  memcpy(peerInfo.peer_addr, Rover1Address, 6);
-  peerInfo.channel = 0;  
+  // register peer
+  peerInfo.channel = 0;
   peerInfo.encrypt = false;
-  
-  // Add peer        
-  if (esp_now_add_peer(&peerInfo) != ESP_OK){
+
+  memcpy(peerInfo.peer_addr, Rover1Address, 6);
+  if (esp_now_add_peer(&peerInfo) != ESP_OK)
+  {
     Serial.println("Failed to add peer");
     return;
   }
+  // register second peer
+  memcpy(peerInfo.peer_addr, Rover2Address, 6);
+  if (esp_now_add_peer(&peerInfo) != ESP_OK)
+  {
+    Serial.println("Failed to add peer");
+    return;
+  }
+  esp_now_register_recv_cb(esp_now_recv_cb_t(OnDataRecv));
 }
 
 void loop()
 {
 
-  // Send message via ESP-NOW
-  esp_err_t result = esp_now_send(Rover1Address, (uint8_t *) &myData, sizeof(myData));
-   
-  if (result == ESP_OK) {
-    Serial.println("Sent with success");
+  if (Serial.available() > 0)
+  {
+    char data = Serial.read();
+    // Read all text and save it in a
+    //Serial.print(data);
+    motor_data.move[0] = data;
   }
-  else {
-    Serial.println("Error sending the data");
+  unsigned long tiempoActual = millis(); // Obtiene el tiempo actual en milisegundos
+
+  // Acess the variables for each board
+  float car1temp = carStruct[0].temp;
+  int car1hum = carStruct[0].hum;
+  float car1lat = carStruct[0].lat;
+  float car1lon = carStruct[0].lon;
+  float car2temp = carStruct[1].temp;
+  int car2hum = carStruct[1].hum;
+  float car2lat = carStruct[1].lat;
+  float car2lon = carStruct[1].lon;
+
+  esp_err_t result = esp_now_send(Rover1Address, (uint8_t *)&motor_data, sizeof(motor_data));
+  esp_err_t result1 = esp_now_send(Rover2Address, (uint8_t *)&motor_data, sizeof(motor_data));
+
+  // Verifica si ha pasado el tiempo de muestreo
+  if (tiempoActual - tiempoAnterior >= intervaloMuestreo)
+  {
+    tiempoAnterior = tiempoActual; // Actualiza el tiempo anterior
+
+    message = "T1: " + String(car1temp) + ",H1: " + String(car1hum) + ",La1: " + String(car1lat, 6) + ",Lo1: " + String(car1lon, 6) + ",T2: " + String(car2temp) + ",H2:" + String(car2hum) + ",La2:" + String(car2lat, 6) + ",Lo2:" + String(car2lon, 6);
+
+    Serial.println(message);
   }
-  Serial.print("Temperature: ");
-  Serial.println(tempIn);
-  Serial.print("Humidity: ");
-  Serial.println(humIn);
-  Serial.print("Latitude: ");
-  Serial.println(latIn);
-  Serial.print("Longitude: ");
-  Serial.println(lonIn);
-  delay(1000);
 }

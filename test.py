@@ -47,6 +47,18 @@ while running:
             elif pygame.key.name(event.key) == 'd':
                 print('Derecha')
                 ser.write(b'r')
+            elif pygame.key.name(event.key) == 'up':
+                print('Adelante')
+                ser.write(b'z')
+            elif pygame.key.name(event.key) == 'down':
+                print('Atrás')
+                ser.write(b'x')
+            elif pygame.key.name(event.key) == 'left':
+                print('Izquierda')
+                ser.write(b'v')
+            elif pygame.key.name(event.key) == 'right':
+                print('Derecha')
+                ser.write(b'c')
 
         elif event.type == pygame.KEYUP:
             print(f'Tecla {pygame.key.name(event.key)} liberada')
