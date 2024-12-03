@@ -10,7 +10,7 @@ ser = serial.Serial('/dev/ttyUSB0', 115200)  # Cambia '/dev/ttyUSB0' por tu puer
 pygame.init()
 
 # Configurar la pantalla
-screen = pygame.display.set_mode((0, 0), pygame.FULLSCREEN)
+screen = pygame.display.set_mode((640, 640),)
 # Figure instance on screen with position and size
 figure = pyc.Figure(screen, 50, 50, 700, 500)
 pygame.display.set_caption('Detección de Teclas y Lectura Serial')
@@ -67,11 +67,7 @@ while running:
         elif event.type == pygame.KEYUP:
             #print(f'Tecla {pygame.key.name(event.key)} liberada')
             ser.write(b's')
-        # add a line chart. First argument "name" should be unique for every chart
-    figure.line('Chart1', [1,2,3,4,6,20,24],[3,5,7,2,7,9,1])
-    # draw figure with specified properties
-    figure.draw()    
-    pygame.display.update()
+        
 
 # Finalizar Pygame y cerrar conexión serial
 pygame.quit()
